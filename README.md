@@ -1,6 +1,3 @@
-# 8080_emulator
-A simple 8080 emulator.
-
 # Test ROM
 Compile and run cputest.c and core.c together to run test ROM. It should print "CPU IS OPERATIONAL". Others roms weren't tested yet.
 
