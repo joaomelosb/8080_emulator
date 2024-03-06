@@ -559,12 +559,18 @@ void i8080_rst(i8080 *state, uint8_t arg) {
 	// already handling an interrupt
 	if (!state->ei)
 		return;
-	
+
 	state->ei = 0;
+	state->hlt = 0;
 	i8080_call(state, 0xcd, arg);
 }
 
 void i8080_step(i8080 *state) {
+
+	// when cpu is halted, only a interrupt can resume operation
+	if (state->hlt)
+		return;
+
 	uint16_t pc = GET_RP(state->pc);
 	uint8_t opcode = state->memory[pc], *tmp;
 
@@ -743,8 +749,8 @@ void i8080_step(i8080 *state) {
 		break;
 	case 0x76:
 		// HLT
-		SET_RP(state->pc, pc);
-		return;
+		state->hlt = 1;
+		break;
 	case 0x80:
 	case 0x81:
 	case 0x82:

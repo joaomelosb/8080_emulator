@@ -22,7 +22,7 @@ typedef struct {
 		uint8_t h, l;
 	} pc, sp;
 	uint8_t *memory;
-	uint8_t ei : 1;
+	uint8_t ei : 1, hlt : 1;
 	uint8_t (*port_in)(uint8_t);
 	void (*port_out)(uint8_t, uint8_t);
 } i8080;
