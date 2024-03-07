@@ -568,8 +568,12 @@ void i8080_rst(i8080 *state, uint8_t arg) {
 void i8080_step(i8080 *state) {
 
 	// when cpu is halted, only a interrupt can resume operation
-	if (state->hlt)
+	if (state->hlt) {
+#ifdef ENABLE_DEBUG
+		printf("%04x: halted!\n", GET_RP(state->pc));
+#endif
 		return;
+	}
 
 	uint16_t pc = GET_RP(state->pc);
 	uint8_t opcode = state->memory[pc], *tmp;
