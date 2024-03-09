@@ -8,19 +8,11 @@ BEGIN_DECL
 
 typedef struct {
 	uint8_t a, b, c, d, e, h, l;
-	union {
-		struct {
-			uint8_t cf : 1;
-			uint8_t pf : 1;
-			uint8_t af : 1;
-			uint8_t zf : 1;
-			uint8_t sf : 1;
-		};
-		uint8_t flags;
-	};
+	uint8_t sf : 1, zf : 1, af : 1, pf : 1, cf : 1;
 	struct {
 		uint8_t h, l;
 	} pc, sp;
+	uint8_t cycles;
 	uint8_t *memory;
 	uint8_t ei : 1, hlt : 1;
 	uint8_t (*port_in)(uint8_t);

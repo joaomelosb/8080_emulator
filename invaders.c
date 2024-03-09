@@ -2,7 +2,7 @@
 #include <SDL2/SDL.h>
 #include "core.h"
 
-#define ROM "invaders"
+#define ROM "roms/invaders"
 
 #define SDL_TEST(expr, s) do { \
 	if (!(expr)) { \

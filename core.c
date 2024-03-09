@@ -434,7 +434,7 @@ static inline _Bool i8080_branch_cond(i8080 *state, uint8_t opcode) {
 	// CALL, JMP and RET
 	if (opcode == 0xcd || opcode == 0xc3 || opcode == 0xc9)
 		return 1;
-	
+
 	switch (opcode >> 3 & 7) {
 	case 0x0:
 		return !state->zf;
@@ -453,7 +453,7 @@ static inline _Bool i8080_branch_cond(i8080 *state, uint8_t opcode) {
 	case 0x7:
 		return state->sf;
 	}
-	
+
 	// not reached
 	return 0;
 }
@@ -464,47 +464,54 @@ static inline _Bool i8080_branch_cond(i8080 *state, uint8_t opcode) {
 
 static inline void i8080_call(i8080 *state, uint8_t opcode, uint16_t addr) {
 	uint16_t sp = GET_RP(state->sp);
-	
+
 	if (!i8080_branch_cond(state, opcode))
 		return;
-	
+
 	state->memory[--sp] = state->pc.h;
 	state->memory[--sp] = state->pc.l;
-	
+
 	SET_RP(state->sp, sp);
 	SET_RP(state->pc, addr);
 }
 
 static inline void i8080_ret(i8080 *state, uint8_t opcode) {
 	uint16_t sp = GET_RP(state->sp);
-	
+
 	if (!i8080_branch_cond(state, opcode))
 		return;
-	
+
 	state->pc.l = state->memory[sp++];
 	state->pc.h = state->memory[sp++];
-	
+
 	SET_RP(state->sp, sp);
 }
 
 static inline void i8080_push(i8080 *state, uint8_t rp) {
 	assert(rp <= 3);
-	
+
 	uint16_t sp = GET_RP(state->sp);
 	uint8_t h, l;
-	
+
 	if (rp == 3) {
-		h = state->flags;
-		l = state->a;
+		h = state->a;
+		l = (
+			state->sf << 7 |
+			state->zf << 6 |
+			state->af << 4 |
+			state->pf << 2 |
+			state->cf << 0 |
+			0x2
+		);
 	} else {
 		uint8_t *tmp = i8080_rp(state, rp);
 		h = *tmp++;
 		l = *tmp;
 	}
-	
+
 	state->memory[--sp] = h;
 	state->memory[--sp] = l;
-	
+
 	SET_RP(state->sp, sp);
 }
 
@@ -537,21 +544,28 @@ static inline void i8080_imm(i8080 *state, uint8_t op, uint8_t byte) {
 
 static inline void i8080_pop(i8080 *state, uint8_t rp) {
 	assert(rp <= 3);
-	
+
 	uint16_t sp = GET_RP(state->sp);
-	uint8_t *h, *l;
-	
+	uint8_t tmp, *h, *l = &tmp;
+
 	if (rp == 3) {
-		h = &state->flags;
-		l = &state->a;
+		h = &state->a;
 	} else {
 		h = i8080_rp(state, rp);
 		l = h + 1;
 	}
-	
+
 	*l = state->memory[sp++];
 	*h = state->memory[sp++];
-	
+
+	if (rp == 3) {
+		state->sf = tmp >> 7 & 1;
+		state->zf = tmp >> 6 & 1;
+		state->af = tmp >> 4 & 1;
+		state->pf = tmp >> 2 & 1;
+		state->cf = tmp >> 0 & 1;
+	}
+
 	SET_RP(state->sp, sp);
 }
 
@@ -579,7 +593,7 @@ void i8080_step(i8080 *state) {
 	uint8_t opcode = state->memory[pc], *tmp;
 
 	inst_t const *inst = &inst_tb[opcode];
-	
+
 	// increment PC
 	state->pc.h = (pc + inst->size) >> 8;
 	state->pc.l = (pc + inst->size) & 0xff;
@@ -933,7 +947,7 @@ void i8080_step(i8080 *state) {
 		state->h ^= state->d;
 		state->d ^= state->h;
 		state->h ^= state->d;
-		
+
 		state->l ^= state->e;
 		state->e ^= state->l;
 		state->l ^= state->e;
@@ -944,7 +958,7 @@ void i8080_step(i8080 *state) {
 		state->h ^= tmp[1];
 		tmp[1] ^= state->h;
 		state->h ^= tmp[1];
-		
+
 		state->l ^= tmp[0];
 		tmp[0] ^= state->l;
 		state->l ^= tmp[0];
